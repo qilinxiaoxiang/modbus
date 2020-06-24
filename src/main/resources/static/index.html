@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Modbus</title>
+    <!-- import CSS -->
+    <link rel="stylesheet" href="/css/index.css">
+    <style>
+        .el-button.is-circle {
+            padding: 5px;
+            font-size: 18px;
+        }
+        div.el-table {
+            display: inline-block;
+            width: 200px;
+            vertical-align: top;
+        }
+    </style>
+    <!-- import Vue before Element -->
+    <script src="/js/vue.js"></script>
+    <!-- import JavaScript -->
+    <script src="/js/index.js"></script>
+    <!-- import axios -->
+    <script src="/js/axios.min.js"></script>
+</head>
+<body>
+<div id="app">
+    <!--建连-->
+    <el-input placeholder="主机" size="mini" style="width: 200px" v-model="connectProperty.host"></el-input>
+    <el-input placeholder="端口" size="mini" style="width: 100px" v-model="connectProperty.port"></el-input>
+    <el-input placeholder="偏移" size="mini" style="width: 200px" v-model="connectProperty.transactionIdentifierOffset"></el-input>
+    <el-input placeholder="连接等待" size="mini" style="width: 200px" v-model="connectProperty.prepareTime"></el-input>
+    <el-switch
+            v-model="isConnected"
+            active-color="#13ce66"
+            inactive-color="gray"
+            inactive-text="断开"
+            active-text="连接"
+            @change="connectSwitch()"
+            v-loading="loading"
+            >
+    </el-switch>
+    <br>
+    <br>
+    <el-button @click="getExcel()" size="mini" type="primary">输出excel</el-button>
+    <br>
+    <el-table :data="pressureInfoList.slice(0,20)">
+        <el-table-column label="编号" prop="code" width="50"></el-table-column>
+        <el-table-column label="压力值" prop="pressure" width="100"></el-table-column>
+    </el-table>
+
+    <el-table :data="pressureInfoList.slice(20,40)">
+        <el-table-column label="编号" prop="code" width="50"></el-table-column>
+        <el-table-column label="压力值" prop="pressure" width="100"></el-table-column>
+    </el-table>
+
+    <el-table :data="pressureInfoList.slice(40,60)">
+        <el-table-column label="编号" prop="code" width="50"></el-table-column>
+        <el-table-column label="压力值" prop="pressure" width="100"></el-table-column>
+    </el-table>
+
+    <el-table :data="pressureInfoList.slice(60,80)">
+        <el-table-column label="编号" prop="code" width="50"></el-table-column>
+        <el-table-column label="压力值" prop="pressure" width="100"></el-table-column>
+    </el-table>
+
+    <el-table :data="pressureInfoList.slice(80,100)">
+        <el-table-column label="编号" prop="code" width="50"></el-table-column>
+        <el-table-column label="压力值" prop="pressure" width="100"></el-table-column>
+    </el-table>
+
+</div>
+</body>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            isConnected: false,
+            pressureInfoList: [],
+            connectProperty: {},
+            loading: false,
+            task: {}
+        },
+        mounted() {
+            this.getConnectionProperty();
+        },
+        methods: {
+            connectSwitch() {
+                if(this.isConnected) {
+                    this.loading = true;
+                    let cur = this;
+                    axios.post('/connect', cur.connectProperty).then(function (response) {
+                        cur.isConnect = true;
+                        cur.loading = false;
+                    }).catch(function (error) {
+                        console.log(error);
+                    });
+                    this.task = setInterval(function() {
+                        cur.getPressureInfo();
+                    }, 3000);
+                } else {
+                    clearInterval(this.task);
+                }
+            },
+            disconnect() {
+                this.isConnect = false;
+            },
+            getPressureInfo() {
+                if (this.isConnect) {
+                    let cur = this;
+                    axios.get('/getPressureInfoList').then(function (response) {
+                        response = response.data;
+                        if (response.success) {
+                            cur.pressureInfoList = response.data;
+                        }
+                    }).catch(function (error) {
+                        console.log(error);
+                    });
+                }
+            },
+            getExcel() {
+                window.location.href = "/getExcel";
+            },
+            getConnectionProperty() {
+                let cur = this;
+                axios.get('/getConnectionProperty').then(function (response) {
+                    response = response.data;
+                    if (response.success) {
+                        cur.connectProperty = response.data;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            }
+        }
+    })
+</script>
+</html>
